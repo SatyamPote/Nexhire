@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Privacy Policy{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Privacy Policy</h1>
+    <p class="text-lg text-gray-700 mb-4">
+        Your privacy is important to us. This Privacy Policy explains how your information is collected and used.
+    </p>
+    <h2 class="text-2xl font-semibold mb-3 text-gray-700">Information We Collect</h2>
+    <p class="text-gray-700 mb-4">
+        When you use our platform, we collect information you provide, such as your email, password, resume details, and profile information. We also collect usage data to improve our services.
+    </p>
+    <h2 class="text-2xl font-semibold mb-3 text-gray-700">How We Use Your Information</h2>
+    <p class="text-gray-700 mb-4">
+        Your information is used to facilitate the recruitment process, match you with jobs, and improve our AI capabilities. We do not sell your personal data to third parties.
+    </p>
+    <h2 class="text-2xl font-semibold mb-3 text-gray-700">Data Security</h2>
+    <p class="text-gray-700 mb-4">
+        We employ industry-standard security measures to protect your data.
+    </p>
+    <div class="mt-6">
+        <a href="{% url 'home' %}" class="text-blue-600 hover:underline">← Back to Home</a>
+    </div>
+</div>
+{% endblock %}

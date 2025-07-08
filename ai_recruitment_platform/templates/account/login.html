@@ -1,14 +1,43 @@
 {% extends 'account/base.html' %} {# Extends the account-specific base #}
-{# {% load crispy_forms_tags %} #} {# If you decide to use crispy-forms later for styling #}
+{# {% load crispy_forms_tags %} #} {# This line is commented out #}
 
 {% block account_content %}
 <h3>Login</h3>
 <form method="POST" action="{% url 'account_login' %}">
     {% csrf_token %}
-    {{ form.as_p }}
+
+    {# Explicitly render the fields expected for email/password login #}
+    {# allauth's login form typically provides 'login' (which is email) and 'password' #}
+    <div>
+        <label for="id_login">Email:</label>
+        <input type="email" name="login" id="id_login" {% if form.login.errors %}class="invalid-input"{% endif %} required>
+        {% if form.login.errors %}
+            <ul class="errorlist">{% for error in form.login.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="id_password">Password:</label>
+        <input type="password" name="password" id="id_password" {% if form.password.errors %}class="invalid-input"{% endif %} required>
+        {% if form.password.errors %}
+            <ul class="errorlist">{% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+    </div>
+
+    {# The 'remember me' checkbox might be rendered differently by allauth's form #}
+    {# We'll add it manually if it's not part of {{ form.as_p }} output when fields are explicit #}
+    {% if form.remember %}
+        <div>
+            <label for="id_remember">Remember Me:</label>
+            {{ form.remember }}
+        </div>
+    {% endif %}
+
+    {# CSRF token is already handled, but redirect field is important #}
     {% if redirect_field_value %}
         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
     {% endif %}
+
     <button type="submit">Login</button>
 </form>
 <p>Don't have an account? <a href="{% url 'account_signup' %}">Sign Up</a></p>

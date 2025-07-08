@@ -1,14 +1,43 @@
 {% extends 'account/base.html' %} {# Extends the account-specific base #}
-{# {% load crispy_forms_tags %} #} {# If you decide to use crispy-forms later for styling #}
+{# {% load crispy_forms_tags %} #} {# This line is commented out #}
 
 {% block account_content %}
 <h3>Sign Up</h3>
 <form method="POST" action="{% url 'account_signup' %}">
     {% csrf_token %}
-    {{ form.as_p }}
+
+    {# --- Explicitly render the fields from ACCOUNT_SIGNUP_FIELDS --- #}
+    {# Django-allauth usually uses 'email', 'password', 'password_confirm' #}
+
+    <div>
+        <label for="id_email">Email Address:</label>
+        <input type="email" name="email" id="id_email" {% if form.email.errors %}class="invalid-input"{% endif %} value="{{ request.POST.email|default:'' }}" required>
+        {% if form.email.errors %}
+            <ul class="errorlist">{% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="id_password1">Password:</label>
+        <input type="password" name="password" id="id_password1" {% if form.password.errors %}class="invalid-input"{% endif %} required>
+        {% if form.password.errors %}
+            <ul class="errorlist">{% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="id_password2">Password Confirmation:</label>
+        <input type="password" name="password_confirm" id="id_password2" {% if form.password_confirm.errors %}class="invalid-input"{% endif %} required>
+        {% if form.password_confirm.errors %}
+            <ul class="errorlist">{% for error in form.password_confirm.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+    </div>
+
+    {# CSRF token is crucial #}
     {% if redirect_field_value %}
         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
     {% endif %}
+
     <button type="submit">Sign Up</button>
 </form>
 <p>Already have an account? <a href="{% url 'account_login' %}">Login</a></p>

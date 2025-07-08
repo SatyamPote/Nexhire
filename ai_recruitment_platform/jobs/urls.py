@@ -3,15 +3,17 @@
 from django.urls import path
 from . import views
 
-app_name = 'jobs' # Namespace for job URLs
+app_name = 'jobs'
 
 urlpatterns = [
-    # List all open jobs
     path('', views.JobListView.as_view(), name='job_list'),
-    # View a single job (e.g., /jobs/1/)
     path('<int:job_id>/', views.JobDetailView.as_view(), name='job_detail'),
-    # Create a new job posting (requires login and recruiter role)
     path('new/', views.JobCreateView.as_view(), name='job_create'),
-
-    # Future: update job, delete job, etc.
+    # Job Management URLs
+    path('<int:job_id>/edit/', views.JobUpdateView.as_view(), name='job_edit'),
+    path('<int:job_id>/delete/', views.JobDeleteView.as_view(), name='job_delete'),
+    # Recruiter Specific URLs
+    path('my-applications/', views.RecruiterJobApplicationsView.as_view(), name='recruiter_applications'),
+    # AI Review URL for Applications
+    path('review/application/<int:application_id>/', views.ResumeAIReviewView.as_view(), name='review_application_ai'),
 ]

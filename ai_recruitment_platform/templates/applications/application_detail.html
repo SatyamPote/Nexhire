@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Application Details{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Application Details</h1>
+
+    {# Display messages if any #}
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <p class="text-sm p-3 rounded {% if message.tags %}
+                    {% if message.level == 40 %}bg-red-100 text-red-800
+                    {% elif message.level == 30 %}bg-yellow-100 text-yellow-800
+                    {% elif message.level == 20 %}bg-green-100 text-green-800
+                    {% elif message.level == 10 %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}
+                {% endif %}">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Application Details Section #}
+    <div class="bg-gray-50 p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Application Information</h2>
+        <p class="text-gray-700 mb-2"><strong>Application ID:</strong> #{{ application.id }}</p>
+        <p class="text-gray-700 mb-2"><strong>Applied On:</strong> {{ application.applied_at|date:"Y-m-d H:i" }}</p>
+        <p class="text-gray-700 mb-2"><strong>Status:</strong> <span class="font-semibold {% if application.status == 'hired' %}text-green-600{% elif application.status == 'rejected' %}text-red-600{% else %}text-blue-600{% endif %}">{{ application.get_status_display }}</span></p>
+        
+        {# AI Scores and Feedback --- #}
+        {% if application.resume_score is not None %}
+            <p class="text-gray-700 mb-2"><strong>AI Resume Score:</strong> <strong class="font-bold text-lg">{{ application.resume_score|floatformat:2 }}%</strong></p>
+        {% endif %}
+        {% if application.resume.ai_feedback %}
+            <p class="text-gray-700 mb-2"><strong>AI Feedback:</strong></p>
+            <div class="bg-gray-100 p-3 rounded-md text-sm">
+                <p class="whitespace-pre-wrap">{{ application.resume.ai_feedback }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    {# Candidate Information Section #}
+    <div class="bg-gray-50 p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Candidate Information</h2>
+        <p class="text-gray-700 mb-2"><strong>Name:</strong> {{ application.candidate.user_profile.user.get_full_name|default:application.candidate.user_profile.user.username }}</p>
+        <p class="text-gray-700 mb-2"><strong>Email:</strong> {{ application.candidate.user_profile.user.email }}</p>
+        <p class="text-gray-700 mb-2"><strong>Phone:</strong> {{ application.candidate.user_profile.phone_number|default:"Not provided" }}</p>
+        {% if application.candidate.linkedin_profile_url %}
+            <p class="mb-2"><strong class="text-gray-700">LinkedIn:</strong> <a href="{{ application.candidate.linkedin_profile_url }}" target="_blank" class="text-blue-600 hover:underline">{{ application.candidate.linkedin_profile_url }}</a></p>
+        {% endif %}
+        {# Add more candidate details as needed #}
+    </div>
+
+    {# Job Information Section #}
+    <div class="bg-gray-50 p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Job Information</h2>
+        <p class="text-gray-700 mb-2"><strong>Title:</strong> <a href="{% url 'jobs:job_detail' pk=application.job.id %}" class="text-blue-600 hover:underline">{{ application.job.title }}</a></p>
+        <p class="text-gray-700 mb-2"><strong>Location:</strong> {{ application.job.location|default:"N/A" }}</p>
+        <p class="text-gray-700 mb-2"><strong>Posted By:</strong> {{ application.job.posted_by.get_full_name|default:application.job.posted_by.username }}</p>
+        {# Add more job details as needed #}
+    </div>
+
+    {# Recruiter Notes Section (Placeholder) #}
+    {# This would involve editing and saving notes, potentially an AI-generated summary #}
+    <div class="bg-gray-50 p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Recruiter Notes</h2>
+        {% if application.feedback_notes %}
+            <p class="text-gray-700 whitespace-pre-wrap">{{ application.feedback_notes }}</p>
+        {% else %}
+            <p class="text-gray-600">No notes yet.</p>
+        {% endif %}
+        {# Later, you'd add an edit button here #}
+    </div>
+
+    {# Back link #}
+    <div class="mt-6">
+        <a href="{% url 'jobs:recruiter_applications' %}" class="text-blue-600 hover:underline">← Back to All Applications</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,31 +1,59 @@
-{% extends 'base.html' %} {# Assuming you have a base.html later #}
+{% extends 'base.html' %}
 {% block title %}{{ job.title }}{% endblock %}
 
 {% block content %}
-<h1>{{ job.title }}</h1>
-<p><strong>Location:</strong> {{ job.location|default:"N/A" }}</p>
-<p><strong>Employment Type:</strong> {{ job.employment_type|default:"N/A" }}</p>
-<p><strong>Salary Range:</strong> {{ job.salary_range|default:"Not specified" }}</p>
+<div class="container mx-auto p-4"> {# Added Tailwind container for better layout #}
+    <h1 class="text-3xl font-bold mb-4">{{ job.title }}</h1>
+    <p class="text-lg text-gray-700 mb-2"><strong>Location:</strong> {{ job.location|default:"N/A" }}</p>
+    <p class="text-gray-700 mb-2"><strong>Employment Type:</strong> {{ job.employment_type|default:"N/A" }}</p>
+    <p class="text-gray-700 mb-4"><strong>Salary Range:</strong> {{ job.salary_range|default:"Not specified" }}</p>
 
-<h2>Description</h2>
-<p>{{ job.description|linebreaks }}</p>
+    <h2 class="text-2xl font-semibold mb-3">Description</h2>
+    <p class="text-gray-700 mb-4">{{ job.description|linebreaks }}</p>
 
-{% if job.responsibilities %}
-    <h2>Responsibilities</h2>
-    <p>{{ job.responsibilities|linebreaks }}</p>
-{% endif %}
+    {% if job.responsibilities %}
+        <h2 class="text-2xl font-semibold mb-3">Responsibilities</h2>
+        <p class="text-gray-700 mb-4">{{ job.responsibilities|linebreaks }}</p>
+    {% endif %}
 
-{% if job.requirements %}
-    <h2>Requirements</h2>
-    <p>{{ job.requirements|linebreaks }}</p>
-{% endif %}
+    {% if job.requirements %}
+        <h2 class="text-2xl font-semibold mb-3">Requirements</h2>
+        <p class="text-gray-700 mb-4">{{ job.requirements|linebreaks }}</p>
+    {% endif %}
 
-<p>Posted by: {{ job.posted_by.get_full_name|default:job.posted_by.username }} on {{ job.published_date|date:"F d, Y" }}</p>
+    <p class="text-sm text-gray-500">Posted by: {{ job.posted_by.get_full_name|default:job.posted_by.username }} on {{ job.published_date|date:"F d, Y" }}</p>
 
-{# Link to apply will come later #}
-{# {% if request.user.is_authenticated and request.user.profile.role == 'candidate' %} #}
-    {# <p><a href="#">Apply for this Job</a></p> #}
-{# {% endif %} #}
+    {# --- Application Button --- #}
+    {% if user.is_authenticated %}
+        {% if user.profile.role == 'candidate' %}
+            {# Check if candidate has a profile and at least one resume uploaded #}
+            {% with candidate=user.profile.candidate_profile %}
+                {% if candidate and candidate.resumes.exists %}
+                    {# Check if already applied #}
+                    {% if not application_exists %} {# This variable will be set in the view later if needed #}
+                         {# Simple form POST for application #}
+                        <form method="post" action="{% url 'applications:apply_job' job_id=job.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="mt-4 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                Apply for this Job
+                            </button>
+                        </form>
+                    {% else %}
+                        <p class="mt-4 text-green-600 font-semibold">You have already applied for this job.</p>
+                    {% endif %}
+                {% elif candidate %}
+                    <p class="mt-4 text-yellow-600">Please upload a resume to apply for jobs.</p>
+                    <a href="{% url 'candidates:resume_upload' %}" class="mt-2 inline-block px-4 py-2 bg-yellow-500 text-white rounded-md">Upload Resume</a>
+                {% endif %}
+            {% endwith %}
+        {% endif %}
+    {% else %}
+        <p class="mt-4 text-gray-600">
+            Please <a href="{% url 'account_login' %}?next={{ request.path }}" class="text-blue-600 hover:underline">login</a> or
+            <a href="{% url 'account_signup' %}" class="text-blue-600 hover:underline">sign up</a> to apply.
+        </p>
+    {% endif %}
 
-<p><a href="{% url 'jobs:job_list' %}">Back to Job Listings</a></p>
+    <p class="mt-6"><a href="{% url 'jobs:job_list' %}" class="text-blue-600 hover:underline">← Back to Job Listings</a></p>
+</div>
 {% endblock %}

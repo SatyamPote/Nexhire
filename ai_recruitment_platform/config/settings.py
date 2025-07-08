@@ -1,3 +1,5 @@
+# ai_recruitment_platform/config/settings.py
+
 """
 Django settings for config project.
 
@@ -41,7 +43,6 @@ INSTALLED_APPS = [
     'allauth',              # Core allauth
     'allauth.account',      # Needed for the account management
     'allauth.socialaccount', # Needed for social accounts (optional for now)
-    # 'allauth.socialaccount.providers.google', # Example for Google login
 
     # --- Our Custom Apps ---
     'users',
@@ -52,21 +53,34 @@ INSTALLED_APPS = [
 
 SITE_ID = 1 # Required by allauth
 
-# Email backend for account verification, password reset, etc.
-# We'll use Django's console backend for local development.
+# --- allauth specific settings ---
+# Use console backend for local development emails (prints to console, but we want to bypass sending/receiving for local login)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'satyampote9999@gmail.com'
 
+# --- CRITICAL allauth settings for simplified local login ---
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'none'     # <<< COMPLETELY DISABLES EMAIL VERIFICATION
+ACCOUNT_USERNAME_REQUIRED = False       # <<< DISABLES USERNAME FIELD
+ACCOUNT_AUTHENTICATION_METHOD = 'email' # <<< FORCES LOGIN VIA EMAIL
+ACCOUNT_UNIQUE_EMAIL = True
 
-ACCOUNT_EMAIL_REQUIRED = True # Require users to have an email address
-ACCOUNT_EMAIL_VERIFICATION = 'none' # 'none', 'optional', 'mandatory'
-ACCOUNT_USERNAME_REQUIRED = False # We don't need a separate username field if we use email as identifier
-ACCOUNT_AUTHENTICATION_METHOD = 'email' # Login using email instead of username
-ACCOUNT_UNIQUE_EMAIL = True # Ensure emails are unique
+# --- THIS IS THE MOST EXPLICIT WAY TO ENSURE EMAIL/PASSWORD LOGIN ---
+# It forces allauth to use only the email method for login.
+ACCOUNT_LOGIN_METHOD = 'email'
+# If you want to be *absolutely* sure and prevent even potential username fallbacks:
+# ACCOUNT_LOGIN_ATTEMPTS_ONLY_EMAIL_VERIFICATION = True # This might be too strict, let's stick with ACCOUNT_LOGIN_METHOD = 'email'
 
-# Redirect URLs after login/logout
-LOGIN_REDIRECT_URL = '/' # Redirect to homepage after login
-ACCOUNT_LOGOUT_REDIRECT_URL = '/' # Redirect to homepage after logout
+# Define signup fields explicitly
+ACCOUNT_SIGNUP_FIELDS = ['email', 'password', 'password_confirm']
+
+# Login attempts
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300 # 5 minutes
+
+# Redirect URLs
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 # --- Middleware ---
 MIDDLEWARE = [
@@ -75,33 +89,30 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware', # Ensure this is present
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # --- Add allauth middleware ---
-    'allauth.account.middleware.AccountMiddleware', # THIS MUST BE PRESENT
 ]
 
 # --- TEMPLATES Configuration ---
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], # Look for templates in a top-level 'templates' folder
-        'APP_DIRS': True, # IMPORTANT: This tells Django to look for templates and context processors inside each app's 'templates' directory.
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request', # Necessary for allauth
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # IMPORTANT: REMOVE THESE LINES that caused the ModuleNotFoundError
-                # 'allauth.account.context_processors.account',
-                # 'allauth.socialaccount.context_processors.socialaccount',
+                # DO NOT explicitly list allauth context processors here.
             ],
         },
     },
 ]
 
-ROOT_URLCONF = 'config.urls' # Points to our project's main urls.py
+ROOT_URLCONF = 'config.urls'
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
@@ -110,7 +121,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3', # SQLite database file
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

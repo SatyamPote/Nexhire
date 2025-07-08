@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}My Job Applications{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">My Job Applications</h1>
+
+    {# Messages block remains the same #}
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <p class="text-sm p-3 rounded {% if message.tags %}
+                    {% if message.level == 40 %}bg-red-100 text-red-800
+                    {% elif message.level == 30 %}bg-yellow-100 text-yellow-800
+                    {% elif message.level == 20 %}bg-green-100 text-green-800
+                    {% elif message.level == 10 %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}
+                {% endif %}">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if applications %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th scope="col" class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Candidate Name</th>
+                        <th scope="col" class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
+                        <th scope="col" class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Applied On</th>
+                        <th scope="col" class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Resume Score</th>
+                        <th scope="col" class="py-3 px-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                        <tr>
+                            <td class="py-3 px-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <a href="{% url 'candidates:candidate_detail' pk=app.candidate.id %}" class="text-blue-600 hover:underline">
+                                    {{ app.candidate.user_profile.user.get_full_name|default:app.candidate.user_profile.user.username }}
+                                </a>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-500">
+                                <a href="{% url 'jobs:job_detail' pk=app.job.id %}" class="text-blue-600 hover:underline">{{ app.job.title }}</a>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap text-sm font-semibold {% if app.status == 'hired' %}text-green-600{% elif app.status == 'rejected' %}text-red-600{% else %}text-blue-600{% endif %}">
+                                {{ app.get_status_display }}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-500">{{ app.applied_at|date:"Y-m-d H:i" }}</td>
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if app.resume_score is not None %}
+                                    {{ app.resume_score|floatformat:2 }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-500 flex space-x-2 items-center">
+                                {# --- Actions for the Application --- #}
+                                {# Link to view application details #}
+                                <a href="{% url 'applications:application_detail' pk=app.id %}" class="text-blue-600 hover:underline">View</a>
+                                {# Link to update application status #}
+                                <a href="{% url 'applications:application_update_status' pk=app.id %}" class="text-green-600 hover:underline">Update Status</a>
+
+                                {# --- AI Review Button --- #}
+                                {% with latest_resume=app.candidate.resumes.order_by('-uploaded_at').first %}
+                                    {% if latest_resume %}
+                                        {% if latest_resume.parse_status == 'pending' or latest_resume.parse_status == 'failed' %}
+                                            <form action="{% url 'jobs:review_application_ai' application_id=app.id %}" method="post" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="text-purple-600 hover:underline text-xs">AI Review</button>
+                                            </form>
+                                        {% elif latest_resume.parse_status == 'parsing' %}
+                                            <span class="text-gray-500 text-xs">AI Reviewing...</span>
+                                        {% elif latest_resume.ai_resume_score is not None %}
+                                            <span class="text-gray-500 text-xs">Review Done</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-500 text-xs">No Resume</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-600">No applications received for your jobs yet.</p>
+    {% endif %}
+
+    <div class="mt-6">
+        <a href="{% url 'jobs:job_create' %}" class="text-blue-600 hover:underline">← Post a New Job</a> |
+        <a href="{% url 'jobs:job_list' %}" class="text-blue-600 hover:underline">View All Posted Jobs</a>
+    </div>
+</div>
+{% endblock %}
