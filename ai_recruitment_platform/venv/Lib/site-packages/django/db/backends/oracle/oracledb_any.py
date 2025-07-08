@@ -1,5 +1,6 @@
 import warnings
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.deprecation import RemovedInDjango60Warning
 
 try:
@@ -17,4 +18,4 @@ except ImportError as e:
         )
         is_oracledb = False
     except ImportError:
-        raise e from None
+        raise ImproperlyConfigured(f"Error loading oracledb module: {e}")

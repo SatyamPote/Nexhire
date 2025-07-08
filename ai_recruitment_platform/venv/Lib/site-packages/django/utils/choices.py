@@ -21,9 +21,8 @@ class BaseChoiceIterator:
         return super().__eq__(other)
 
     def __getitem__(self, index):
-        if isinstance(index, slice) or index < 0:
-            # Suboptimally consume whole iterator to handle slices and negative
-            # indexes.
+        if index < 0:
+            # Suboptimally consume whole iterator to handle negative index.
             return list(self)[index]
         try:
             return next(islice(self, index, index + 1))

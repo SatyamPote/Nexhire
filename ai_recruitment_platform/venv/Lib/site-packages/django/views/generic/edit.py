@@ -170,7 +170,7 @@ class BaseCreateView(ModelFormMixin, ProcessFormView):
     """
     Base view for creating a new object instance.
 
-    This requires subclassing to provide a response mixin.
+    Using this base class requires subclassing to provide a response mixin.
     """
 
     def get(self, request, *args, **kwargs):
@@ -194,7 +194,7 @@ class BaseUpdateView(ModelFormMixin, ProcessFormView):
     """
     Base view for updating an existing object.
 
-    This requires subclassing to provide a response mixin.
+    Using this base class requires subclassing to provide a response mixin.
     """
 
     def get(self, request, *args, **kwargs):
@@ -242,7 +242,7 @@ class BaseDeleteView(DeletionMixin, FormMixin, BaseDetailView):
     """
     Base view for deleting an object.
 
-    This requires subclassing to provide a response mixin.
+    Using this base class requires subclassing to provide a response mixin.
     """
 
     form_class = Form

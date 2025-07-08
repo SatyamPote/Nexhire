@@ -242,11 +242,7 @@ def do_block(parser, token):
     return BlockNode(block_name, nodelist)
 
 
-def construct_relative_path(
-    current_template_name,
-    relative_name,
-    allow_recursion=False,
-):
+def construct_relative_path(current_template_name, relative_name):
     """
     Convert a relative path (starting with './' or '../') to the full template
     name based on the current_template_name.
@@ -268,7 +264,7 @@ def construct_relative_path(
             "The relative path '%s' points outside the file hierarchy that "
             "template '%s' is in." % (relative_name, current_template_name)
         )
-    if not allow_recursion and current_template_name.lstrip("/") == new_name:
+    if current_template_name.lstrip("/") == new_name:
         raise TemplateSyntaxError(
             "The relative path '%s' was translated to template name '%s', the "
             "same template in which the tag appears."
@@ -350,11 +346,7 @@ def do_include(parser, token):
         options[option] = value
     isolated_context = options.get("only", False)
     namemap = options.get("with", {})
-    bits[1] = construct_relative_path(
-        parser.origin.template_name,
-        bits[1],
-        allow_recursion=True,
-    )
+    bits[1] = construct_relative_path(parser.origin.template_name, bits[1])
     return IncludeNode(
         parser.compile_filter(bits[1]),
         extra_context=namemap,

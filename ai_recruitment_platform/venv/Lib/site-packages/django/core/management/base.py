@@ -142,7 +142,7 @@ class DjangoHelpFormatter(HelpFormatter):
         super().add_arguments(self._reordered_actions(actions))
 
 
-class OutputWrapper:
+class OutputWrapper(TextIOBase):
     """
     Wrapper around stdout/stderr
     """
@@ -179,9 +179,6 @@ class OutputWrapper:
             msg += ending
         style_func = style_func or self.style_func
         self._out.write(style_func(msg))
-
-
-TextIOBase.register(OutputWrapper)
 
 
 class BaseCommand:
@@ -348,7 +345,7 @@ class BaseCommand:
             parser,
             "--traceback",
             action="store_true",
-            help="Display a full stack trace on CommandError exceptions.",
+            help="Raise on CommandError exceptions.",
         )
         self.add_base_argument(
             parser,
@@ -453,8 +450,10 @@ class BaseCommand:
             self.stderr = OutputWrapper(options["stderr"])
 
         if self.requires_system_checks and not options["skip_checks"]:
-            check_kwargs = self.get_check_kwargs(options)
-            self.check(**check_kwargs)
+            if self.requires_system_checks == ALL_CHECKS:
+                self.check()
+            else:
+                self.check(tags=self.requires_system_checks)
         if self.requires_migrations_checks:
             self.check_migrations()
         output = self.handle(*args, **options)
@@ -468,11 +467,6 @@ class BaseCommand:
                 )
             self.stdout.write(output)
         return output
-
-    def get_check_kwargs(self, options):
-        if self.requires_system_checks == ALL_CHECKS:
-            return {}
-        return {"tags": self.requires_system_checks}
 
     def check(
         self,
@@ -678,13 +672,7 @@ class LabelCommand(BaseCommand):
     """
 
     label = "label"
-    missing_args_message = "Enter at least one %s."
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if self.missing_args_message == LabelCommand.missing_args_message:
-            self.missing_args_message = self.missing_args_message % self.label
+    missing_args_message = "Enter at least one %s." % label
 
     def add_arguments(self, parser):
         parser.add_argument("args", metavar=self.label, nargs="+")

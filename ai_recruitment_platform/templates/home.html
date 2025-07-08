@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="text-center py-10">
+    <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome to the AI Recruitment Platform</h1>
+    <p class="text-lg text-gray-600 mb-8">Your smart solution for finding the best talent.</p>
+
+    {% if user.is_authenticated %}
+        {# User is logged in #}
+        {% if user.profile.role == 'candidate' %}
+            <p class="mb-4">You are logged in as a Candidate. Explore jobs or complete your profile.</p>
+            <div class="flex justify-center space-x-4">
+                <a href="{% url 'jobs:job_list' %}" class="btn btn-primary">View Jobs</a>
+                <a href="{% url 'candidates:candidate_profile' %}" class="btn btn-secondary">My Profile</a>
+            </div>
+        {% elif user.profile.role == 'recruiter' %}
+            <p class="mb-4">You are logged in as a Recruiter. Post jobs and manage candidates.</p>
+            <div class="flex justify-center space-x-4">
+                <a href="{% url 'jobs:job_list' %}" class="btn btn-primary">All Jobs</a> {# Link to list of jobs #}
+                <a href="{% url 'jobs:job_create' %}" class="btn btn-secondary">Post New Job</a>
+                {# Add link to recruiter dashboard later #}
+            </div>
+        {% elif user.profile.role == 'admin' %}
+             <p class="mb-4">You are logged in as an Admin.</p>
+             <div class="flex justify-center space-x-4">
+                <a href="{% url 'admin:index' %}" class="btn btn-primary">Go to Admin</a>
+             </div>
+        {% else %}
+            {# Fallback if role is unknown or not set #}
+            <p class="mb-4">Welcome! Your role is not fully configured.</p>
+             <a href="{% url 'account_logout' %}" class="btn btn-danger">Logout</a>
+        {% endif %}
+    {% else %}
+        {# User is not logged in #}
+        <p class="mb-4">Ready to find your next opportunity or hire your next great employee?</p>
+        <div class="flex justify-center space-x-4">
+            <a href="{% url 'account_signup' %}" class="btn btn-primary">Sign Up</a>
+            <a href="{% url 'account_login' %}" class="btn btn-secondary">Login</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Basic Tailwind-like styling for buttons to make the example work */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+</style>
+{% endblock %}

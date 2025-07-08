@@ -59,7 +59,7 @@ DEFAULT_FROM_EMAIL = 'satyampote9999@gmail.com'
 
 
 ACCOUNT_EMAIL_REQUIRED = True # Require users to have an email address
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory' # 'none', 'optional', 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'none' # 'none', 'optional', 'mandatory'
 ACCOUNT_USERNAME_REQUIRED = False # We don't need a separate username field if we use email as identifier
 ACCOUNT_AUTHENTICATION_METHOD = 'email' # Login using email instead of username
 ACCOUNT_UNIQUE_EMAIL = True # Ensure emails are unique

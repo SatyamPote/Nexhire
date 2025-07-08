@@ -1,6 +1,6 @@
 """
-This module houses the GEOS ctypes prototype functions for the
-unary and binary predicate operations on geometries.
+ This module houses the GEOS ctypes prototype functions for the
+ unary and binary predicate operations on geometries.
 """
 
 from ctypes import c_byte, c_char_p, c_double
@@ -12,7 +12,6 @@ from django.contrib.gis.geos.prototypes.errcheck import check_predicate
 # ## Binary & unary predicate factories ##
 class UnaryPredicate(GEOSFuncFactory):
     "For GEOS unary predicate functions."
-
     argtypes = [GEOM_PTR]
     restype = c_byte
     errcheck = staticmethod(check_predicate)
@@ -20,7 +19,6 @@ class UnaryPredicate(GEOSFuncFactory):
 
 class BinaryPredicate(UnaryPredicate):
     "For GEOS binary predicate functions."
-
     argtypes = [GEOM_PTR, GEOM_PTR]
 
 
