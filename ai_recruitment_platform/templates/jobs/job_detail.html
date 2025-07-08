@@ -1,0 +1,31 @@
+{% extends 'base.html' %} {# Assuming you have a base.html later #}
+{% block title %}{{ job.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ job.title }}</h1>
+<p><strong>Location:</strong> {{ job.location|default:"N/A" }}</p>
+<p><strong>Employment Type:</strong> {{ job.employment_type|default:"N/A" }}</p>
+<p><strong>Salary Range:</strong> {{ job.salary_range|default:"Not specified" }}</p>
+
+<h2>Description</h2>
+<p>{{ job.description|linebreaks }}</p>
+
+{% if job.responsibilities %}
+    <h2>Responsibilities</h2>
+    <p>{{ job.responsibilities|linebreaks }}</p>
+{% endif %}
+
+{% if job.requirements %}
+    <h2>Requirements</h2>
+    <p>{{ job.requirements|linebreaks }}</p>
+{% endif %}
+
+<p>Posted by: {{ job.posted_by.get_full_name|default:job.posted_by.username }} on {{ job.published_date|date:"F d, Y" }}</p>
+
+{# Link to apply will come later #}
+{# {% if request.user.is_authenticated and request.user.profile.role == 'candidate' %} #}
+    {# <p><a href="#">Apply for this Job</a></p> #}
+{# {% endif %} #}
+
+<p><a href="{% url 'jobs:job_list' %}">Back to Job Listings</a></p>
+{% endblock %}

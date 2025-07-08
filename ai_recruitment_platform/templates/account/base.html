@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Account{% endblock %}
+
+{% block content %}
+<div class="account-container">
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Account Management</h2>
+    <hr>
+
+    <div class="flex">
+        {# Sidebar for account links #}
+        <div class="w-1/4 p-4 border-r">
+            <nav>
+                <p><a href="{% url 'account_login' %}">Login</a></p>
+                <p><a href="{% url 'account_signup' %}">Sign Up</a></p>
+                <p><a href="{% url 'account_reset_password' %}">Reset Password</a></p>
+                {% if user.is_authenticated %}
+                    <p><a href="{% url 'account_email' %}">Email Settings</a></p>
+                    <p><a href="{% url 'account_change_password' %}">Change Password</a></p>
+                {% endif %}
+            </nav>
+        </div>
+
+        {# Main content area for the specific account page #}
+        <div class="w-3/4 p-4">
+            {% block account_content %}
+            {# Content from signup, login, etc. will be rendered here #}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

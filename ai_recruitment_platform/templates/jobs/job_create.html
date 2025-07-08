@@ -1,0 +1,12 @@
+{% extends 'base.html' %} {# Assuming you have a base.html later #}
+{% block title %}Post a New Job{% endblock %}
+
+{% block content %}
+<h1>Post a New Job</h1>
+<form method="post" enctype="multipart/form-data"> {# enctype for file uploads if any #}
+    {% csrf_token %}
+    {{ form.as_p }} {# Renders form fields as paragraphs, will style with CSS later #}
+    <button type="submit">Post Job</button>
+</form>
+<p><a href="{% url 'jobs:job_list' %}">Cancel</a></p>
+{% endblock %}

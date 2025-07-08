@@ -1,0 +1,23 @@
+{% extends 'base.html' %} {# Assuming you have a base.html later #}
+{% block title %}Job Listings{% endblock %}
+
+{% block content %}
+<h1>Available Jobs</h1>
+{% if jobs %}
+    <ul>
+        {% for job in jobs %}
+            <li>
+                <a href="{% url 'jobs:job_detail' job_id=job.id %}">
+                    <strong>{{ job.title }}</strong> - {{ job.location|default:"N/A" }}
+                </a>
+                <p>{{ job.description|truncatewords:30 }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No jobs posted yet. Please check back later.</p>
+{% endif %}
+{% if request.user.is_authenticated and request.user.profile.role == 'recruiter' %}
+    <p><a href="{% url 'jobs:job_create' %}">Post a New Job</a></p>
+{% endif %}
+{% endblock %}

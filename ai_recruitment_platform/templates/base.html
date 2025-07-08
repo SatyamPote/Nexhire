@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Recruitment Platform{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f7f9fc; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #e0e0e0; }
+        nav a { margin: 0 10px; color: #007bff; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        h1, h2 { margin-bottom: 15px; color: #2c3e50; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 10px; }
+        .form-input, .form-textarea, .form-select, .form-file-input {
+            width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        .form-textarea { height: 120px; }
+        button {
+            background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        .errorlist { color: red; list-style-type: none; padding: 0; }
+        .errorlist li { margin-bottom: 5px; }
+        /* Specific styling for account pages */
+        .account-container { display: flex; margin-top: 20px; }
+        .account-container nav { flex-direction: column; align-items: flex-start; border: none; border-right: 1px solid #e0e0e0; padding-right: 20px; }
+        .account-container nav p { margin-bottom: 10px; }
+        .account-container nav a { margin: 0; }
+        .account-container div:last-child { padding-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <div class="flex items-center">
+                <a href="{% url 'home' %}"><strong>AI Recruiter</strong></a>
+                <a href="{% url 'jobs:job_list' %}">Jobs</a>
+                {# Add links for other sections as they are built #}
+            </div>
+            <div class="flex items-center">
+                {% if user.is_authenticated %}
+                    {# User is logged in #}
+                    {% if user.profile.role == 'candidate' %}
+                        <a href="{% url 'candidates:candidate_profile' %}">My Profile</a>
+                    {% elif user.profile.role == 'recruiter' %}
+                        {# Placeholder for recruiter dashboard links #}
+                        <a href="#">Recruiter Dashboard</a>
+                    {% elif user.profile.role == 'admin' %}
+                         <a href="{% url 'admin:index' %}">Admin Panel</a>
+                    {% endif %}
+                    | <a href="{% url 'account_logout' %}">Logout</a> {# Use allauth logout URL #}
+                {% else %}
+                    {# User is not logged in #}
+                    <a href="{% url 'account_login' %}">Login</a>
+                    <a href="{% url 'account_signup' %}">Sign Up</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        {% block content %}
+        {# Page-specific content will go here #}
+        {% endblock %}
+
+        <footer>
+            <hr class="my-4">
+            <p class="text-center text-gray-500">© 2023 AI Recruitment Platform</p>
+        </footer>
+    </div>
+</body>
+</html>

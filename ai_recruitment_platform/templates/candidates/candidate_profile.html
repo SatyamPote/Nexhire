@@ -1,0 +1,41 @@
+{% extends 'base.html' %} {# Assuming you have a base.html later #}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<h1>My Profile</h1>
+<p><strong>Name:</strong> {{ candidate.user_profile.user.get_full_name|default:candidate.user_profile.user.username }}</p>
+<p><strong>Email:</strong> {{ candidate.user_profile.user.email }}</p>
+<p><strong>Role:</strong> {{ candidate.user_profile.role }}</p>
+{% if candidate.user_profile.phone_number %}
+    <p><strong>Phone:</strong> {{ candidate.user_profile.phone_number }}</p>
+{% endif %}
+
+{% if candidate.linkedin_profile_url %}
+    <p><strong>LinkedIn:</strong> <a href="{{ candidate.linkedin_profile_url }}" target="_blank">{{ candidate.linkedin_profile_url }}</a></p>
+{% endif %}
+{% if candidate.github_profile_url %}
+    <p><strong>GitHub:</strong> <a href="{{ candidate.github_profile_url }}" target="_blank">{{ candidate.github_profile_url }}</a></p>
+{% endif %}
+{% if candidate.portfolio_url %}
+    <p><strong>Portfolio:</strong> <a href="{{ candidate.portfolio_url }}" target="_blank">{{ candidate.portfolio_url }}</a></p>
+{% endif %}
+
+<h2>My Resumes</h2>
+{% if candidate.resumes.all %}
+    <ul>
+        {% for resume in candidate.resumes.all %}
+            <li>
+                <a href="{{ resume.resume_file.url }}" target="_blank">{{ resume.resume_file.name|split:'/'|last }}</a>
+                (Uploaded: {{ resume.uploaded_at|date:"Y-m-d" }} | Status: {{ resume.get_parse_status_display }})
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>You have not uploaded any resumes yet.</p>
+{% endif %}
+
+<p><a href="{% url 'candidates:resume_upload' %}">Upload New Resume</a></p>
+
+{# Link to edit profile will come later #}
+
+{% endblock %}

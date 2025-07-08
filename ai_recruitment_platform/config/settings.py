@@ -1,5 +1,3 @@
-# ai_recruitment_platform/config/settings.py
-
 """
 Django settings for config project.
 
@@ -13,11 +11,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-import os # Needed for BASE_DIR
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR is defined as the directory containing this file (the config directory).
-# We need to go up one level to get to the project's root directory.
 BASE_DIR = Path(__file__).resolve().parent.parent # This will point to ai_recruitment_platform/
 
 
@@ -41,15 +37,38 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # --- Third-party apps ---
+    'allauth',              # Core allauth
+    'allauth.account',      # Needed for the account management
+    'allauth.socialaccount', # Needed for social accounts (optional for now)
+    # 'allauth.socialaccount.providers.google', # Example for Google login
+
     # --- Our Custom Apps ---
     'users',
     'jobs',
     'candidates',
     'applications',
-
-    # We'll add DRF, allauth, etc. later
 ]
 
+SITE_ID = 1 # Required by allauth
+
+# Email backend for account verification, password reset, etc.
+# We'll use Django's console backend for local development.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'satyampote9999@gmail.com'
+
+
+ACCOUNT_EMAIL_REQUIRED = True # Require users to have an email address
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory' # 'none', 'optional', 'mandatory'
+ACCOUNT_USERNAME_REQUIRED = False # We don't need a separate username field if we use email as identifier
+ACCOUNT_AUTHENTICATION_METHOD = 'email' # Login using email instead of username
+ACCOUNT_UNIQUE_EMAIL = True # Ensure emails are unique
+
+# Redirect URLs after login/logout
+LOGIN_REDIRECT_URL = '/' # Redirect to homepage after login
+ACCOUNT_LOGOUT_REDIRECT_URL = '/' # Redirect to homepage after logout
+
+# --- Middleware ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -58,22 +77,23 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # --- Add allauth middleware ---
+    'allauth.account.middleware.AccountMiddleware', # THIS MUST BE PRESENT
 ]
 
-ROOT_URLCONF = 'config.urls' # Points to our project's main urls.py
-
+# --- TEMPLATES Configuration ---
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'templates'], # Look for templates in a top-level 'templates' folder
-        'APP_DIRS': True, # Look for templates inside each app's 'templates' sub-directory
+        'APP_DIRS': True, # IMPORTANT: This tells Django to look for templates and context processors inside each app's 'templates' directory.
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',
+                'django.template.context_processors.request', # Necessary for allauth
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # Add context processors for allauth if used later
+                # IMPORTANT: REMOVE THESE LINES that caused the ModuleNotFoundError
                 # 'allauth.account.context_processors.account',
                 # 'allauth.socialaccount.context_processors.socialaccount',
             ],
@@ -81,12 +101,12 @@ TEMPLATES = [
     },
 ]
 
+ROOT_URLCONF = 'config.urls' # Points to our project's main urls.py
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # --- Database ---
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -94,22 +114,7 @@ DATABASES = {
     }
 }
 
-# For Production, you'll switch to PostgreSQL. Here's a placeholder:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'your_db_name',
-#         'USER': 'your_db_user',
-#         'PASSWORD': 'your_db_password',
-#         'HOST': 'your_db_host', # e.g., 'localhost' or a cloud DB endpoint
-#         'PORT': '5432',
-#     }
-# }
-
-
 # --- Password validation ---
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -127,60 +132,27 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # --- Internationalization ---
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC' # Consider changing to your local timezone, e.g., 'America/New_York'
-
+TIME_ZONE = 'UTC'
 USE_I18N = True
-
 USE_TZ = True
 
 
 # --- Static files (CSS, JavaScript, Images) ---
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
 STATIC_URL = 'static/'
-
-# Configure where Django should look for static files in development
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# In production, you'll use collectstatic, which gathers all static files
-# into a single directory defined by STATIC_ROOT.
-# STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-
 # --- Media files (User Uploads like resumes) ---
-# https://docs.djangoproject.com/en/5.0/topics/files/
-
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media' # Directory to store uploaded files
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # --- Default primary key field type ---
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- Custom User Model ---
-# We will configure this later when we create the users app and UserProfile model
-# AUTH_USER_MODEL = 'users.UserProfile' # Example if UserProfile *was* the user model
-
-# --- Email Settings (Placeholder) ---
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.example.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your_email@example.com'
-# EMAIL_HOST_PASSWORD = 'your_email_password'
-# DEFAULT_FROM_EMAIL = 'Your Company <noreply@yourcompany.com>'
-
-
 # --- Logging ---
-# Basic logging setup for development can be useful for debugging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -191,6 +163,6 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO', # Can be set to DEBUG for more verbosity
+        'level': 'INFO',
     },
 }

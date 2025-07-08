@@ -1,0 +1,15 @@
+{% extends 'account/base.html' %} {# Extends the account-specific base #}
+{# {% load crispy_forms_tags %} #} {# If you decide to use crispy-forms later for styling #}
+
+{% block account_content %}
+<h3>Sign Up</h3>
+<form method="POST" action="{% url 'account_signup' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+    {% endif %}
+    <button type="submit">Sign Up</button>
+</form>
+<p>Already have an account? <a href="{% url 'account_login' %}">Login</a></p>
+{% endblock %}

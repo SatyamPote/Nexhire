@@ -1,0 +1,12 @@
+{% extends 'base.html' %} {# Assuming you have a base.html later #}
+{% block title %}Upload Resume{% endblock %}
+
+{% block content %}
+<h1>Upload Your Resume</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }} {# Renders form fields #}
+    <button type="submit">Upload Resume</button>
+</form>
+<p><a href="{% url 'candidates:candidate_profile' %}">Cancel</a></p>
+{% endblock %}

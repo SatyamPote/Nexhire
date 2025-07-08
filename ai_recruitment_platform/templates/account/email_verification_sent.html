@@ -1,0 +1,7 @@
+{% extends 'account/base.html' %}
+
+{% block account_content %}
+<h3>Email Verification Sent</h3>
+<p>A verification email has been sent to your email address. Please check your inbox and click the link to verify your email address.</p>
+<p>If you didn't receive the email, you can <a href="{% url 'account_email_verification_resend' %}">resend the verification email</a>.</p>
+{% endblock %}
