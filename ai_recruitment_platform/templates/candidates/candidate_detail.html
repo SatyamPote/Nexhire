@@ -7,7 +7,7 @@
         Candidate Profile: {{ candidate.user_profile.user.get_full_name|default:candidate.user_profile.user.username }}
     </h1>
 
-    {# Display messages if any #}
+    {# Messages block #}
     {% if messages %}
         <div class="mb-4">
             {% for message in messages %}
@@ -42,7 +42,7 @@
         {% endif %}
     </div>
 
-    {# Candidate Resumes #}
+    {# Candidate Resumes with AI Data #}
     <div class="bg-gray-50 p-6 rounded-lg shadow-md mb-6">
         <h2 class="text-2xl font-semibold mb-4 text-gray-700">Resumes</h2>
         {% if candidate.resumes.all %}
@@ -59,6 +59,7 @@
                                 <p class="text-xs text-gray-500">
                                     Uploaded: {{ resume.uploaded_at|date:"Y-m-d H:i" }} | Status: {{ resume.get_parse_status_display }}
                                 </p>
+                                {# --- Display AI Score and Feedback --- #}
                                 {% if resume.ai_resume_score is not None %}
                                     <p class="text-sm text-gray-700">
                                         AI Score: <strong class="font-bold">{{ resume.ai_resume_score|floatformat:2 }}%</strong>
@@ -66,9 +67,9 @@
                                 {% endif %}
                             </div>
                             {% if resume.ai_feedback %}
-                                <div class="text-sm text-gray-600 bg-gray-100 p-2 rounded-md max-w-md"> {# Added max-width for feedback #}
+                                <div class="text-sm text-gray-600 bg-gray-100 p-2 rounded-md max-w-md">
                                     <p class="font-semibold">AI Feedback:</p>
-                                    <p class="whitespace-pre-wrap">{{ resume.ai_feedback|truncatechars:150 }}</p> {# Truncate long feedback #}
+                                    <p class="whitespace-pre-wrap">{{ resume.ai_feedback|truncatechars:150 }}</p>
                                 </div>
                             {% endif %}
                         </div>
