@@ -1,8 +1,14 @@
 from typing import Any, Dict, Optional
 
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.core.exceptions import (
+    ImproperlyConfigured,
+    PermissionDenied,
+    ValidationError,
+)
 from django.http import HttpResponse
 
+from allauth.account.adapter import get_adapter as get_account_adapter
+from allauth.account.internal.emailkit import valid_email_or_none
 from allauth.account.utils import get_next_redirect_url, get_request_param
 from allauth.core import context
 from allauth.socialaccount import app_settings
@@ -131,10 +137,24 @@ class Provider:
         )
         if email:
             common_fields["email"] = email
+        else:
+            common_fields.pop("email", None)
+        phone = common_fields.get("phone")
+        if phone:
+            try:
+                phone = (
+                    get_account_adapter().phone_form_field(required=True).clean(phone)
+                )
+                common_fields["phone"] = phone
+            except ValidationError:
+                phone = None
+                common_fields.pop("phone")
         sociallogin = SocialLogin(
             provider=self,
             account=socialaccount,
             email_addresses=email_addresses,
+            phone=phone,
+            phone_verified=common_fields.get("phone_verified", False),
         )
         user = sociallogin.user = adapter.new_user(request, sociallogin)
         user.set_unusable_password()
@@ -179,8 +199,18 @@ class Provider:
         # Avoid loading models before adapters have been registered.
         from allauth.account.models import EmailAddress
 
+        # Validate & clean the email addresses.
+        email = valid_email_or_none(email)
+        # A bit ugly, but the signature of this function is such that we have to
+        # modify addresses in place.
+        for idx in range(len(addresses))[::-1]:
+            address = addresses[idx]
+            address.email = valid_email_or_none(address.email)
+            if not address.email:
+                addresses.pop(idx)
+
         # Move user.email over to EmailAddress
-        if email and email.lower() not in [a.email.lower() for a in addresses]:
+        if email and email not in [a.email for a in addresses]:
             addresses.insert(
                 0,
                 EmailAddress(email=email, verified=bool(email_verified), primary=True),

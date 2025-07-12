@@ -17,11 +17,7 @@ from allauth.account.forms import (
     VerifyPhoneForm,
 )
 from allauth.account.internal import flows
-from allauth.account.models import (
-    EmailAddress,
-    Login,
-    get_emailconfirmation_model,
-)
+from allauth.account.models import EmailAddress, Login, get_emailconfirmation_model
 from allauth.core import context
 from allauth.core.internal.cryptokit import compare_user_code
 from allauth.headless.adapter import get_adapter
@@ -226,6 +222,21 @@ class MarkAsPrimaryEmailInput(SelectEmailInput):
         if not flows.manage_email.can_mark_as_primary(email):
             raise get_account_adapter().validation_error("unverified_primary_email")
         return email
+
+
+class ResendEmailVerificationInput(SelectEmailInput):
+    def clean_email(self):
+        if not account_settings.EMAIL_VERIFICATION_BY_CODE_ENABLED:
+            self.process = None
+            return super().clean_email()
+        email = self.cleaned_data["email"]
+        validate_email(email)
+        self.process = flows.email_verification_by_code.EmailVerificationProcess.resume(
+            context.request
+        )
+        if not self.process:
+            raise get_adapter().validation_error("unknown_email")
+        return self.process.email_address
 
 
 class ReauthenticateInput(ReauthenticateForm, inputs.Input):

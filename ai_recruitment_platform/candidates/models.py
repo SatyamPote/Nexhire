@@ -3,7 +3,8 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
-from users.models import UserProfile # Import UserProfile
+# Import UserProfile from the users app
+from users.models import UserProfile # Ensure this import is correct
 
 # Define choices for resume parsing status
 PARSE_STATUS_CHOICES = [
@@ -16,13 +17,16 @@ PARSE_STATUS_CHOICES = [
 class Candidate(models.Model):
     """
     Represents a candidate profile, linked one-to-one with a UserProfile.
+    This model holds data specifically relevant to a candidate's interaction with the platform.
     """
+    # A Candidate *is* a UserProfile that's acting as a candidate.
+    # Using OneToOneField with primary_key=True means a Candidate object is also the primary key.
     user_profile = models.OneToOneField(
-        UserProfile,
+        UserProfile, # Links Candidate to UserProfile
         on_delete=models.CASCADE,
         related_name='candidate_profile',
-        primary_key=True,
-        verbose_name='User Account'
+        primary_key=True, # This model's primary key is the UserProfile's ID
+        verbose_name='User Profile'
     )
     linkedin_profile_url = models.URLField(
         blank=True, null=True,
@@ -40,6 +44,7 @@ class Candidate(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        # Display the full name or username from the linked UserProfile
         return f"Candidate: {self.user_profile.user.get_full_name() or self.user_profile.user.username}"
 
     class Meta:
@@ -52,15 +57,15 @@ class Resume(models.Model):
     plus AI-generated scores and feedback.
     """
     candidate = models.ForeignKey(
-        Candidate,
+        Candidate, # Links Resume to Candidate
         on_delete=models.CASCADE,
-        related_name='resumes',
+        related_name='resumes', # Access resumes from a candidate: candidate.resumes.all()
         help_text="The candidate to whom this resume belongs."
     )
     resume_file = models.FileField(
-        upload_to='resumes/',
+        upload_to='resumes/', # This will create a 'resumes' directory within your MEDIA_ROOT
         validators=[
-            FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'txt', 'rtf'])
+            FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'txt', 'rtf']) # Add more if needed
         ],
         help_text="The resume file uploaded by the candidate."
     )

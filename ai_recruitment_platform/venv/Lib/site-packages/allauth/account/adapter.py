@@ -37,10 +37,7 @@ from allauth.core import context
 from allauth.core.internal import ratelimit
 from allauth.core.internal.adapter import BaseAdapter
 from allauth.core.internal.cryptokit import generate_user_code
-from allauth.core.internal.httpkit import (
-    headed_redirect_response,
-    is_headless_request,
-)
+from allauth.core.internal.httpkit import headed_redirect_response, is_headless_request
 from allauth.utils import generate_unique_username, import_attribute
 
 
@@ -337,9 +334,11 @@ class DefaultAccountAdapter(BaseAdapter):
             user.set_unusable_password()
         self.populate_username(request, user)
         if commit:
-            # Ability not to commit makes it easier to derive from
-            # this adapter by adding
             user.save()
+        if form._has_phone_field:
+            phone = form.cleaned_data.get("phone")
+            if phone:
+                self.set_phone(user, phone, False)
         return user
 
     def clean_username(self, username, shallow=False):
@@ -482,7 +481,7 @@ class DefaultAccountAdapter(BaseAdapter):
         signal_kwargs,
         email,
         signup,
-        redirect_url
+        redirect_url,
     ):
         if not user.is_active:
             return self.respond_user_inactive(request, user)
@@ -496,7 +495,7 @@ class DefaultAccountAdapter(BaseAdapter):
         signal_kwargs,
         email,
         signup,
-        redirect_url
+        redirect_url,
     ):
         from .utils import get_login_redirect_url
 
@@ -911,6 +910,23 @@ class DefaultAccountAdapter(BaseAdapter):
         Sends a verification code.
         """
         raise NotImplementedError
+
+    @property
+    def _has_phone_impl(self) -> bool:
+        """
+        Checks whether the phone number adapter is fully implemented.
+        """
+        methods = (
+            "send_verification_code_sms",
+            "set_phone",
+            "get_phone",
+            "set_phone_verified",
+            "get_user_by_phone",
+        )
+        return all(
+            getattr(self.__class__, method) != getattr(DefaultAccountAdapter, method)
+            for method in methods
+        )
 
     def set_phone(self, user, phone: str, verified: bool):
         """

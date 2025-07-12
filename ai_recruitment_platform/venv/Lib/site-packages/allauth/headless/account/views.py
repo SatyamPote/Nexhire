@@ -12,6 +12,9 @@ from allauth.account.internal.flows import (
     password_reset,
     password_reset_by_code,
 )
+from allauth.account.internal.flows.email_verification import (
+    send_verification_email_to_address,
+)
 from allauth.account.internal.flows.email_verification_by_code import (
     EmailVerificationProcess,
 )
@@ -23,7 +26,6 @@ from allauth.account.stages import (
     LoginStageController,
     PhoneVerificationStage,
 )
-from allauth.account.utils import send_email_confirmation
 from allauth.core import ratelimit
 from allauth.core.exceptions import ImmediateHttpResponse, RateLimited
 from allauth.decorators import rate_limit
@@ -40,9 +42,9 @@ from allauth.headless.account.inputs import (
     ReauthenticateInput,
     RequestLoginCodeInput,
     RequestPasswordResetInput,
+    ResendEmailVerificationInput,
     ResetPasswordInput,
     ResetPasswordKeyInput,
-    SelectEmailInput,
     SignupInput,
     VerifyEmailInput,
     VerifyPhoneInput,
@@ -375,7 +377,7 @@ class ChangePasswordView(AuthenticatedAPIView):
 class ManageEmailView(APIView):
     input_class = {
         "POST": AddEmailInput,
-        "PUT": SelectEmailInput,
+        "PUT": ResendEmailVerificationInput,
         "DELETE": DeleteEmailInput,
         "PATCH": MarkAsPrimaryEmailInput,
     }
@@ -385,7 +387,7 @@ class ManageEmailView(APIView):
         if request.user.is_authenticated:
             self.user = request.user
         elif request.method != "POST":
-            return response.AuthenticationResponse(request)
+            return AuthenticationResponse(request)
         else:
             self.verification_stage_process = EmailVerificationProcess.resume(request)
             if (
@@ -428,7 +430,16 @@ class ManageEmailView(APIView):
 
     def put(self, request, *args, **kwargs):
         addr = self.input.cleaned_data["email"]
-        sent = send_email_confirmation(request, request.user, email=addr.email)
+        if process := self.input.process:
+            sent = False
+            if process.can_resend:
+                try:
+                    self.input.process.resend()
+                    sent = True
+                except RateLimited:
+                    pass
+        else:
+            sent = send_verification_email_to_address(request, addr)
         return response.RequestEmailVerificationResponse(
             request, verification_sent=sent
         )
@@ -452,7 +463,7 @@ class ManagePhoneView(APIView):
         if request.user.is_authenticated:
             self.user = request.user
         elif request.method == "GET":
-            return response.AuthenticationResponse(request)
+            return AuthenticationResponse(request)
         elif request.method == "POST":
             stage = LoginStageController.enter(request, PhoneVerificationStage.key)
             if stage:

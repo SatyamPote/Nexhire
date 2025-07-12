@@ -1,62 +1,29 @@
-# --- Core Django ---
-Django>=5.0,<5.1 # We're on Django 5.2.4, so let's pin closer to that.
+# --- Core Django Dependencies ---
+Django>=5.0,<5.1
+djangorestframework>=3.14.0
 
 # --- Authentication and Account Management ---
-django-allauth>=0.50.0 # For robust authentication, signup, and more.
+django-allauth>=0.50.0
+dj-rest-auth>=4.0.1  # Optional, for easy REST auth with allauth
 
-# --- API for Resume Parsing (Placeholder) ---
-# Affinda API client (example)
-# affinda-client>=0.1.0
+# --- Firebase Admin SDK ---
+firebase-admin>=6.0.0
 
-# Sovren API client (example)
-# sovren-api-client>=1.0.0
+# --- Environment Variable Management ---
+python-dotenv>=1.0.0
+python-decouple>=3.8  # Optional alternative to dotenv
 
-# --- AI & NLP Libraries ---
-# OpenAI API client (example)
-# openai>=1.0.0
+# --- CORS Headers (for frontend-backend interaction) ---
+django-cors-headers>=4.0.0
 
-# spaCy for NLP pipelines
-# spacy>=3.7.0
-# python -m spacy download en_core_web_sm # Download model after installing spacy
+# --- PostgreSQL (if you're not using SQLite) ---
+psycopg2-binary>=2.9.0  # Only if using PostgreSQL
 
-# Hugging Face Transformers library
-# transformers>=4.30.0
+# --- Django Extensions (Optional Utilities) ---
+django-extensions>=3.2.3
 
-# LangChain for LLM orchestration
-# langchain>=0.0.300
+# --- Pillow (for image uploads/avatars) ---
+Pillow>=10.0.0
 
-# --- Storage ---
-# boto3 # For AWS S3 integration (if not using Django's default file storage)
-# django-storages # For easier integration with cloud storage like S3
-
-# --- Video Interview Tools ---
-# Daily.co SDK (example, specific package depends on integration method)
-# opencv-python # For facial analysis if building custom
-
-# --- Payments ---
-# stripe # For payment gateway integration
-
-# --- Chatbot / RAG ---
-# Pinecone client (example)
-# pinecone-client>=3.0.0
-# Weaviate client (example)
-# weaviate-client>=3.0.0
-
-# --- Email Services ---
-# sendgrid # If using SendGrid
-# mailgun # If using Mailgun
-
-# --- Analytics / Logging ---
-# sentry-sdk # For error tracking and monitoring
-# plausible-analytics # If using Plausible
-
-# --- Deployment Tools ---
-# gunicorn # WSGI HTTP Server for production
-# psycopg2-binary # If using PostgreSQL for database
-
-# --- Frontend Helper (Optional, but often useful) ---
-# django-compressor # For optimizing static assets
-
-# --- Other potentially useful libraries ---
-# python-dotenv # For loading environment variables from a .env file
-# Pillow # For image processing
+# --- drf-yasg (for API Documentation, optional) ---
+drf-yasg>=1.21.7

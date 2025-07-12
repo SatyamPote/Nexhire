@@ -59,7 +59,7 @@
                                 <p class="text-xs text-gray-500">
                                     Uploaded: {{ resume.uploaded_at|date:"Y-m-d H:i" }} | Status: {{ resume.get_parse_status_display }}
                                 </p>
-                                {# --- Display AI Score and Feedback --- #}
+                                {# --- Display AI Score and Feedback for this Resume --- #}
                                 {% if resume.ai_resume_score is not None %}
                                     <p class="text-sm text-gray-700">
                                         AI Score: <strong class="font-bold">{{ resume.ai_resume_score|floatformat:2 }}%</strong>

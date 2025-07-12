@@ -35,9 +35,9 @@ from allauth.account.forms import (
     VerifyPhoneForm,
 )
 from allauth.account.internal import flows
-from allauth.account.internal.decorators import (
-    login_not_required,
-    login_stage_required,
+from allauth.account.internal.decorators import login_not_required, login_stage_required
+from allauth.account.internal.flows.email_verification import (
+    send_verification_email_to_address,
 )
 from allauth.account.mixins import (
     AjaxCapableProcessFormViewMixin,
@@ -58,11 +58,7 @@ from allauth.account.stages import (
     LoginStageController,
     PhoneVerificationStage,
 )
-from allauth.account.utils import (
-    send_email_confirmation,
-    sync_user_email_addresses,
-    user_display,
-)
+from allauth.account.utils import user_display
 from allauth.core import ratelimit
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.core.internal.httpkit import redirect
@@ -361,7 +357,7 @@ class EmailView(AjaxCapableProcessFormViewMixin, FormView):
 
     def dispatch(self, request, *args, **kwargs):
         self._did_send_verification_email = False
-        sync_user_email_addresses(request.user)
+        flows.manage_email.sync_user_email_address(request.user)
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -409,12 +405,16 @@ class EmailView(AjaxCapableProcessFormViewMixin, FormView):
 
     def _action_send(self, request, *args, **kwargs):
         email_address = self._get_email_address(request)
+        did_send_verification_email = False
         if email_address:
-            send_email_confirmation(
-                self.request, request.user, email=email_address.email
+            did_send_verification_email = send_verification_email_to_address(
+                self.request, email_address
             )
-            self._did_send_verification_email = True
-        if app_settings.EMAIL_VERIFICATION_BY_CODE_ENABLED:
+        self._did_send_verification_email = did_send_verification_email
+        if (
+            app_settings.EMAIL_VERIFICATION_BY_CODE_ENABLED
+            and did_send_verification_email
+        ):
             return HttpResponseRedirect(reverse("account_email_verification_sent"))
 
     def _action_remove(self, request, *args, **kwargs):
@@ -864,7 +864,7 @@ class EmailVerificationSentView(TemplateView):
     template_name = "account/verification_sent." + app_settings.TEMPLATE_EXTENSION
 
 
-class ConfirmEmailVerificationCodeView(FormView):
+class ConfirmEmailVerificationCodeView(NextRedirectMixin, FormView):
     template_name = (
         "account/confirm_email_verification_code." + app_settings.TEMPLATE_EXTENSION
     )
@@ -962,11 +962,15 @@ class ConfirmEmailVerificationCodeView(FormView):
                 messages.ERROR,
                 message=adapter.error_messages["rate_limited"],
             )
-        return HttpResponseRedirect(reverse("account_email_verification_sent"))
+        return HttpResponseRedirect(
+            self.passthrough_next_url(reverse("account_email_verification_sent"))
+        )
 
     def _change_form_valid(self, form):
         self._process.change_to(form.cleaned_data["email"], form.account_already_exists)
-        return HttpResponseRedirect(reverse("account_email_verification_sent"))
+        return HttpResponseRedirect(
+            self.passthrough_next_url(reverse("account_email_verification_sent"))
+        )
 
     def _verify_form_valid(self, form):
         email_address = self._process.finish()
@@ -974,7 +978,10 @@ class ConfirmEmailVerificationCodeView(FormView):
             if not email_address:
                 return self.stage.abort()
             return self.stage.exit()
-        if not email_address:
+        url = self.get_next_url()
+        if url:
+            pass
+        elif not email_address:
             url = reverse("account_email")
         else:
             url = get_adapter(self.request).get_email_verification_redirect_url(
@@ -1262,11 +1269,15 @@ class _BaseVerifyPhoneView(NextRedirectMixin, FormView):
                 messages.ERROR,
                 message=adapter.error_messages["rate_limited"],
             )
-        return HttpResponseRedirect(reverse("account_verify_phone"))
+        return HttpResponseRedirect(
+            self.passthrough_next_url(reverse("account_verify_phone"))
+        )
 
     def _change_form_valid(self, form):
         self.process.change_to(form.cleaned_data["phone"], form.account_already_exists)
-        return HttpResponseRedirect(reverse("account_verify_phone"))
+        return HttpResponseRedirect(
+            self.passthrough_next_url(reverse("account_verify_phone"))
+        )
 
     def _verify_form_valid(self, form):
         self.process.finish()

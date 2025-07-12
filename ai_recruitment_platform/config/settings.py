@@ -1,5 +1,3 @@
-# ai_recruitment_platform/config/settings.py
-
 """
 Django settings for config project.
 
@@ -14,21 +12,30 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import firebase_admin # Import firebase_admin
+from firebase_admin import credentials # Import credentials
+from django.utils.translation import gettext_lazy as _ # For potential future use with allauth
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent # This will point to ai_recruitment_platform/
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-will-be-generated-here' # Replace with a real key when deploying
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-fallback-secret-key-for-local-dev') # Use env var or fallback
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True # Set to False for production
+DEBUG = True
 
-ALLOWED_HOSTS = [] # Add your domain names here for production
+# ALLOWED_HOSTS should be set in .env or directly for production, but for local development:
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] # Ensure these are present
+
 
 # --- Application definition ---
 INSTALLED_APPS = [
@@ -42,7 +49,8 @@ INSTALLED_APPS = [
     # --- Third-party apps ---
     'allauth',              # Core allauth
     'allauth.account',      # Needed for the account management
-    'allauth.socialaccount', # Needed for social accounts (optional for now)
+    'allauth.socialaccount', # Needed for social accounts
+    'allauth.socialaccount.providers.google', # <<< ENSURE GOOGLE PROVIDER IS LISTED
 
     # --- Our Custom Apps ---
     'users',
@@ -53,34 +61,33 @@ INSTALLED_APPS = [
 
 SITE_ID = 1 # Required by allauth
 
+
 # --- allauth specific settings ---
-# Use console backend for local development emails (prints to console, but we want to bypass sending/receiving for local login)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # Emails go to console for local dev
 DEFAULT_FROM_EMAIL = 'satyampote9999@gmail.com'
 
-# --- CRITICAL allauth settings for simplified local login ---
+# --- Corrected/Modern allauth settings for simple local login ---
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'none'     # <<< COMPLETELY DISABLES EMAIL VERIFICATION
-ACCOUNT_USERNAME_REQUIRED = False       # <<< DISABLES USERNAME FIELD
-ACCOUNT_AUTHENTICATION_METHOD = 'email' # <<< FORCES LOGIN VIA EMAIL
+ACCOUNT_EMAIL_VERIFICATION = 'none'   # <<< BYPASSES EMAIL VERIFICATION FOR LOCAL DEV
+ACCOUNT_USERNAME_REQUIRED = False     # <<< NO SEPARATE USERNAME FIELD
+ACCOUNT_AUTHENTICATION_METHOD = 'email' # <<< LOGIN VIA EMAIL
 ACCOUNT_UNIQUE_EMAIL = True
 
-# --- THIS IS THE MOST EXPLICIT WAY TO ENSURE EMAIL/PASSWORD LOGIN ---
-# It forces allauth to use only the email method for login.
+# Explicitly set login method (modern approach)
 ACCOUNT_LOGIN_METHOD = 'email'
-# If you want to be *absolutely* sure and prevent even potential username fallbacks:
-# ACCOUNT_LOGIN_ATTEMPTS_ONLY_EMAIL_VERIFICATION = True # This might be too strict, let's stick with ACCOUNT_LOGIN_METHOD = 'email'
 
-# Define signup fields explicitly
-ACCOUNT_SIGNUP_FIELDS = ['email', 'password', 'password_confirm']
+# Define signup fields (ensure password fields are correctly named for allauth)
+ACCOUNT_SIGNUP_FIELDS = ['email', 'password1', 'password_confirm']
 
-# Login attempts
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300 # 5 minutes
+# --- Rate Limiting (Modern way to handle login attempts) ---
+ACCOUNT_RATE_LIMITS = {
+    'login_failed': '5/m', # Example: 5 failed attempts per minute
+}
 
 # Redirect URLs
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
 
 # --- Middleware ---
 MIDDLEWARE = [
@@ -90,7 +97,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware', # Ensure this is present
-    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware', # Essential for admin and messages
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -106,7 +113,9 @@ TEMPLATES = [
                 'django.template.context_processors.request', # Necessary for allauth
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # DO NOT explicitly list allauth context processors here.
+                # --- allauth context processors are found automatically ---
+                # 'allauth.account.context_processors.account',
+                # 'allauth.socialaccount.context_processors.socialaccount',
             ],
         },
     },
@@ -118,33 +127,31 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # --- Database ---
+# --- IMPORTANT: Using SQLite for local development ---
+# This is crucial because you confirmed you are NOT using PostgreSQL/Supabase locally.
+# This configuration avoids the need for psycopg2 and connection errors.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3', # SQLite database file
     }
 }
+# --- If you were using PostgreSQL, the DATABASES setting would look different,
+#     and you would need psycopg2 installed and a DATABASE_URL in .env. ---
+
 
 # --- Password validation ---
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 
 # --- Internationalization ---
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'UTC' # Consider changing to your local timezone, e.g., 'America/New_York'
 USE_I18N = True
 USE_TZ = True
 
@@ -152,12 +159,13 @@ USE_TZ = True
 # --- Static files (CSS, JavaScript, Images) ---
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR / "static", # Directory where custom static files are placed
 ]
+# STATIC_ROOT = BASE_DIR / 'staticfiles' # Used for collectstatic in production
 
 # --- Media files (User Uploads like resumes) ---
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR / 'media' # Directory where uploaded files are stored
 
 
 # --- Default primary key field type ---
@@ -168,12 +176,52 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
+        'console': {'class': 'logging.StreamHandler'},
     },
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
     },
 }
+
+# --- SOCIAL ACCOUNT PROVIDER SETTINGS ---
+# Configure Google OAuth credentials
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': os.environ.get('GOOGLE_OAUTH_CLIENT_ID'),
+            'secret': os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET'),
+            'key': ''  # Not used for Google
+        },
+        'SCOPE': ['email', 'profile'],
+        'AUTH_PARAMS': {'access_type': 'offline'},
+        'ORDER_KEY': 1,
+    }
+}
+
+ACCOUNT_ADAPTER = 'users.adapters.AccountAdapter' # For general account flows
+SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter' # For social account specific
+
+# --- Firebase Admin SDK Configuration ---
+# Make sure the path to your service account key JSON file is correct.
+# It's best to place it in the project root and load the path from environment variables.
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')
+
+# Initialize Firebase Admin SDK ONCE.
+# This check prevents re-initialization if the app is already running or imported multiple times.
+try:
+    firebase_admin.get_app()
+except ValueError:
+    # Initialize only if the service account key path is valid and file exists
+    if FIREBASE_SERVICE_ACCOUNT_KEY_PATH and os.path.exists(FIREBASE_SERVICE_ACCOUNT_KEY_PATH): 
+        try:
+            cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_KEY_PATH)
+            firebase_admin.initialize_app(cred)
+            print("Firebase Admin SDK initialized successfully.")
+        except Exception as e:
+            print(f"Error initializing Firebase Admin SDK: {e}")
+            # Handle error appropriately if Firebase initialization fails
+    else:
+        print("Firebase Admin SDK initialization skipped: Service account key not found or path invalid.")
+        # Set a flag or variable to indicate Firebase is not configured.
+

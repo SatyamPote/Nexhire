@@ -1,44 +1,57 @@
-{% extends 'account/base.html' %} {# Extends the account-specific base #}
-{# {% load crispy_forms_tags %} #} {# This line is commented out #}
+{% extends 'account/base.html' %}
+{% block title %}Login{% endblock %}
+{% load socialaccount %} {# Load socialaccount tags for {% provider_login_url %} #}
 
 {% block account_content %}
 <h3>Login</h3>
-<form method="POST" action="{% url 'account_login' %}">
-    {% csrf_token %}
 
-    {# Explicitly render the fields expected for email/password login #}
-    {# allauth's login form typically provides 'login' (which is email) and 'password' #}
+{# --- Login Form for Email/Password --- #}
+<form method="POST" action="{% url 'account_login' %}" class="mb-4">
+    {% csrf_token %} {# Essential for security #}
+
+    {# Explicitly rendering fields based on allauth's typical expectations #}
+    {# allauth usually uses 'login' for the email/username field #}
     <div>
         <label for="id_login">Email:</label>
-        <input type="email" name="login" id="id_login" {% if form.login.errors %}class="invalid-input"{% endif %} required>
+        <input type="email" name="login" id="id_login" value="{{ request.POST.email|default:'' }}" required class="form-input">
         {% if form.login.errors %}
             <ul class="errorlist">{% for error in form.login.errors %}<li>{{ error }}</li>{% endfor %}</ul>
         {% endif %}
     </div>
-
     <div>
         <label for="id_password">Password:</label>
-        <input type="password" name="password" id="id_password" {% if form.password.errors %}class="invalid-input"{% endif %} required>
+        <input type="password" name="password" id="id_password" required class="form-input">
         {% if form.password.errors %}
             <ul class="errorlist">{% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}</ul>
         {% endif %}
     </div>
 
-    {# The 'remember me' checkbox might be rendered differently by allauth's form #}
-    {# We'll add it manually if it's not part of {{ form.as_p }} output when fields are explicit #}
-    {% if form.remember %}
-        <div>
-            <label for="id_remember">Remember Me:</label>
-            {{ form.remember }}
+    {# Remember Me checkbox #}
+    {% if form.remember %} {# Check if 'remember' is a field provided by the form #}
+        <div class="flex items-center my-3">
+            {{ form.remember }} {# Renders the checkbox and its label #}
         </div>
     {% endif %}
 
-    {# CSRF token is already handled, but redirect field is important #}
     {% if redirect_field_value %}
         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
     {% endif %}
-
-    <button type="submit">Login</button>
+    <button type="submit" class="w-full mt-4">Login</button>
 </form>
-<p>Don't have an account? <a href="{% url 'account_signup' %}">Sign Up</a></p>
+
+{# --- Separator for Social Login --- #}
+<div class="my-4 text-center text-gray-500">or</div>
+
+{# --- Google Login Button using django-allauth --- #}
+{# This link points to allauth's social login URL for Google #}
+{# It will initiate the OAuth flow handled by django-allauth #}
+<a href="{% provider_login_url 'google' %}" class="block text-center w-full py-3 px-4 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100">
+    <svg class="w-5 h-5 inline mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0,-1.78-1.45,-3.25-3.25,-3.25H10.5v3.5h5.84c.72,3.14,2.6,5.66,5.64,7.3l2.17,-1.63z" fill="#4285F4"/>
+        <path d="M10.5,19.5c4.22,0,7.87,-2.69,9.12,-6.25l-2.17,-1.63c-0.91,2.33-2.87,4.07-5.64,4.07-3.14,0-5.74,-2.41-5.74,-5.55s2.6,-5.55,5.74,-5.55c1.6,0,2.97,0.67,4.03,1.65l2.17,-1.63C16.77,7.22,13.7,5.5,10.5,5.5c-4.78,0-8.77,3.69-8.77,8.35s3.99,8.35,8.77,8.35c4.39,0,7.98,-2.93,7.98,-7.3z" fill="#FBBC05"/>
+    </svg>
+    Sign in with Google
+</a>
+
+<p class="mt-4">Don't have an account? <a href="{% url 'account_signup' %}" class="text-blue-600 hover:underline">Sign Up</a></p>
 {% endblock %}

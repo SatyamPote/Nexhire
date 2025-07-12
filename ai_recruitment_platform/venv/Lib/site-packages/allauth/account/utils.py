@@ -10,6 +10,7 @@ from django.utils.http import base36_to_int, int_to_base36
 from allauth.account import app_settings
 from allauth.account.adapter import get_adapter
 from allauth.account.internal import flows
+from allauth.account.internal.emailkit import valid_email_or_none
 from allauth.account.internal.userkit import default_user_display  # noqa
 from allauth.account.internal.userkit import user_display  # noqa
 from allauth.account.internal.userkit import user_email  # noqa
@@ -17,7 +18,7 @@ from allauth.account.internal.userkit import user_field  # noqa
 from allauth.account.internal.userkit import user_username  # noqa
 from allauth.account.models import Login
 from allauth.core.internal import httpkit
-from allauth.utils import get_request_param, valid_email_or_none
+from allauth.utils import get_request_param
 
 
 def _unicode_ci_compare(s1, s2) -> bool:
@@ -216,30 +217,6 @@ def setup_user_email(request, user, addresses):
         user_email(user, primary.email)
         user.save()
     return primary
-
-
-def send_email_confirmation(request, user, signup=False, email=None) -> bool:
-    return flows.email_verification.send_verification_email(
-        request, user, signup=signup, email=email
-    )
-
-
-def sync_user_email_addresses(user):
-    """
-    Keep user.email in sync with user.emailaddress_set.
-
-    Under some circumstances the user.email may not have ended up as
-    an EmailAddress record, e.g. in the case of manually created admin
-    users.
-    """
-    from .models import EmailAddress
-
-    email = user_email(user)
-    if email and not EmailAddress.objects.filter(user=user, email=email).exists():
-        # get_or_create() to gracefully handle races
-        EmailAddress.objects.get_or_create(
-            user=user, email=email, defaults={"primary": False, "verified": False}
-        )
 
 
 def filter_users_by_username(*username):

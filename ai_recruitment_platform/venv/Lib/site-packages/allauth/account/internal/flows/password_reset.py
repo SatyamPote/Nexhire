@@ -9,10 +9,7 @@ from django.urls import reverse
 from allauth.account import app_settings, signals
 from allauth.account.adapter import get_adapter
 from allauth.account.app_settings import LoginMethod
-from allauth.account.internal.flows.login import (
-    perform_login,
-    record_authentication,
-)
+from allauth.account.internal.flows.login import perform_login, record_authentication
 from allauth.account.internal.flows.signup import send_unknown_account_mail
 from allauth.account.models import EmailAddress, Login
 from allauth.core.internal.httpkit import get_frontend_url
@@ -34,7 +31,7 @@ def perform_password_reset_login(
         extra_data["phone"] = phone
     elif email:
         extra_data["email"] = email
-    record_authentication(request, method="password_reset", **extra_data)
+    record_authentication(request, user, method="password_reset", **extra_data)
     login = Login(user=user, email=email)
     return perform_login(request, login)
 

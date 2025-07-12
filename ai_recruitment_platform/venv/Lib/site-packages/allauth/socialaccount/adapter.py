@@ -1,23 +1,18 @@
 import functools
 import warnings
 
-from django.core.exceptions import (
-    ImproperlyConfigured,
-    MultipleObjectsReturned,
-)
+from django.core.exceptions import ImproperlyConfigured, MultipleObjectsReturned
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 
 from allauth.account.adapter import get_adapter as get_account_adapter
+from allauth.account.internal.emailkit import valid_email_or_none
 from allauth.account.utils import user_email, user_field, user_username
 from allauth.core.internal.adapter import BaseAdapter
-from allauth.core.internal.modelkit import (
-    deserialize_instance,
-    serialize_instance,
-)
-from allauth.utils import import_attribute, valid_email_or_none
+from allauth.core.internal.modelkit import deserialize_instance, serialize_instance
+from allauth.utils import import_attribute
 
 from . import app_settings
 
@@ -103,10 +98,11 @@ class DefaultSocialAccountAdapter(BaseAdapter):
         """
         u = sociallogin.user
         u.set_unusable_password()
+        account_adapter = get_account_adapter()
         if form:
-            get_account_adapter().save_user(request, u, form)
+            account_adapter.save_user(request, u, form)
         else:
-            get_account_adapter().populate_username(request, u)
+            account_adapter.populate_username(request, u)
         sociallogin.save(request)
         return u
 
@@ -168,8 +164,11 @@ class DefaultSocialAccountAdapter(BaseAdapter):
 
     def get_signup_form_initial_data(self, sociallogin):
         user = sociallogin.user
+        email = user_email(user)
+        if not email and len(sociallogin.email_addresses) > 0:
+            email = sociallogin.email_addresses[0].email
         initial = {
-            "email": user_email(user) or "",
+            "email": email or "",
             "username": user_username(user) or "",
             "first_name": user_field(user, "first_name") or "",
             "last_name": user_field(user, "last_name") or "",
@@ -222,7 +221,7 @@ class DefaultSocialAccountAdapter(BaseAdapter):
             assert not provider_class.uses_apps  # nosec
             return provider_class(request, app=None)
         else:
-            raise ImproperlyConfigured(f"unknown provider: {app.provider}")
+            raise ImproperlyConfigured(f"unknown provider: {provider}")
 
     def list_apps(self, request, provider=None, client_id=None):
         """SocialApp's can be setup in the database, or, via

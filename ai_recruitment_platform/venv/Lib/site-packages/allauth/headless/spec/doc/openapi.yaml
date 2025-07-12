@@ -1535,8 +1535,7 @@ components:
       value:
         status: 200
         data:
-          user:
-            <<: *user-example
+          user: *user-example
           methods:
             - method: password
               at: 1711555057.065702
@@ -1551,8 +1550,7 @@ components:
       value:
         status: 200
         data:
-          user:
-            <<: *user-example
+          user: *user-example
           methods:
             - method: code
               at: 1711555057.065702
@@ -1567,8 +1565,7 @@ components:
       value:
         status: 200
         data:
-          user:
-            <<: *user-example
+          user: *user-example
           methods:
             - method: password
               at: 1711555057.065702
@@ -1781,8 +1778,7 @@ components:
       value:
         status: 401
         data:
-          user:
-            <<: *user-example
+          user: *user-example
           methods:
             - method: password
               at: 1711555057.065702
@@ -2336,6 +2332,54 @@ components:
           required:
             - method
             - at
+        - type: object
+          title: |
+            Authenticated after password reset
+          properties:
+            method:
+              type: string
+              enum:
+                - password_reset
+            at:
+              $ref: "#/components/schemas/Timestamp"
+            email:
+              $ref: "#/components/schemas/Email"
+          required:
+            - at
+            - email
+            - method
+        - type: object
+          title: |
+            Authenticated by confirming a code sent by email.
+          properties:
+            method:
+              type: string
+              enum:
+                - code
+            at:
+              $ref: "#/components/schemas/Timestamp"
+            email:
+              $ref: "#/components/schemas/Email"
+          required:
+            - at
+            - email
+            - method
+        - type: object
+          title: |
+            Authenticated by confirming a code sent by phone.
+          properties:
+            method:
+              type: string
+              enum:
+                - code
+            at:
+              $ref: "#/components/schemas/Timestamp"
+            phone:
+              $ref: "#/components/schemas/Phone"
+          required:
+            - at
+            - method
+            - phone
         - type: object
           title: |
             Reauthenticated by password
@@ -3285,8 +3329,7 @@ components:
               value:
                 status: 401
                 data:
-                  user:
-                    <<: *user-example
+                  user: *user-example
                   methods:
                     - method: password
                       at: 1711555057.065702

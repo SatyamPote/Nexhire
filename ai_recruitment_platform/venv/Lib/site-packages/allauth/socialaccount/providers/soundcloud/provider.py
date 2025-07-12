@@ -1,8 +1,6 @@
 from allauth.socialaccount.providers.base import ProviderAccount
 from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
-from allauth.socialaccount.providers.soundcloud.views import (
-    SoundCloudOAuth2Adapter,
-)
+from allauth.socialaccount.providers.soundcloud.views import SoundCloudOAuth2Adapter
 
 
 class SoundCloudAccount(ProviderAccount):
@@ -20,7 +18,7 @@ class SoundCloudProvider(OAuth2Provider):
     oauth2_adapter_class = SoundCloudOAuth2Adapter
 
     def extract_uid(self, data):
-        return str(data["id"])
+        return str(data["urn"])
 
     def extract_common_fields(self, data):
         return dict(

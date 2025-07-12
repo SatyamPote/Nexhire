@@ -1,0 +1,10 @@
+# .gitignore
+# ... other ignored files ...
+.env
+__pycache__/
+*.pyc
+*.orig
+db.sqlite3
+media/
+staticfiles/
+venv/
