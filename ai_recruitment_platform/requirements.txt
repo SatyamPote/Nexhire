@@ -1,29 +1,12 @@
-# --- Core Django Dependencies ---
 Django>=5.0,<5.1
 djangorestframework>=3.14.0
-
-# --- Authentication and Account Management ---
 django-allauth>=0.50.0
-dj-rest-auth>=4.0.1  # Optional, for easy REST auth with allauth
-
-# --- Firebase Admin SDK ---
+dj-rest-auth>=4.0.1
 firebase-admin>=6.0.0
-
-# --- Environment Variable Management ---
 python-dotenv>=1.0.0
-python-decouple>=3.8  # Optional alternative to dotenv
-
-# --- CORS Headers (for frontend-backend interaction) ---
+python-decouple>=3.8
 django-cors-headers>=4.0.0
-
-# --- PostgreSQL (if you're not using SQLite) ---
-psycopg2-binary>=2.9.0  # Only if using PostgreSQL
-
-# --- Django Extensions (Optional Utilities) ---
+psycopg2-binary>=2.9.0
 django-extensions>=3.2.3
-
-# --- Pillow (for image uploads/avatars) ---
 Pillow>=10.0.0
-
-# --- drf-yasg (for API Documentation, optional) ---
 drf-yasg>=1.21.7

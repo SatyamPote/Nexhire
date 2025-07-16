@@ -1,0 +1,15 @@
+# .vercelignore
+.git
+.github/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+media/
+static/admin/ # If not needed for production
+static/cache/ # If you have a cache directory
+*.log
+.env # DO NOT INCLUDE YOUR .env FILE EVER
+node_modules/ # If you accidentally include frontend build artifacts
