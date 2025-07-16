@@ -6,7 +6,7 @@ import copy
 import datetime
 
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
-from django.forms.fields import Field, FileField
+from django.forms.fields import Field
 from django.forms.utils import ErrorDict, ErrorList, RenderableFormMixin
 from django.forms.widgets import Media, MediaDefiningClass
 from django.utils.datastructures import MultiValueDict
@@ -68,6 +68,8 @@ class BaseForm(RenderableFormMixin):
     template_name_ul = "django/forms/ul.html"
     template_name_label = "django/forms/label.html"
 
+    bound_field_class = None
+
     def __init__(
         self,
         data=None,
@@ -81,6 +83,7 @@ class BaseForm(RenderableFormMixin):
         field_order=None,
         use_required_attribute=None,
         renderer=None,
+        bound_field_class=None,
     ):
         self.is_bound = data is not None or files is not None
         self.data = MultiValueDict() if data is None else data
@@ -123,6 +126,12 @@ class BaseForm(RenderableFormMixin):
                 if isinstance(self.default_renderer, type):
                     renderer = renderer()
         self.renderer = renderer
+
+        self.bound_field_class = (
+            bound_field_class
+            or self.bound_field_class
+            or getattr(self.renderer, "bound_field_class", None)
+        )
 
     def order_fields(self, field_order):
         """
@@ -224,18 +233,16 @@ class BaseForm(RenderableFormMixin):
         hidden_fields = []
         top_errors = self.non_field_errors().copy()
         for name, bf in self._bound_items():
-            bf_errors = self.error_class(bf.errors, renderer=self.renderer)
             if bf.is_hidden:
-                if bf_errors:
+                if bf.errors:
                     top_errors += [
                         _("(Hidden field %(name)s) %(error)s")
                         % {"name": name, "error": str(e)}
-                        for e in bf_errors
+                        for e in bf.errors
                     ]
                 hidden_fields.append(bf)
             else:
-                errors_str = str(bf_errors)
-                fields.append((bf, errors_str))
+                fields.append((bf, bf.errors))
         return {
             "form": self,
             "fields": fields,
@@ -300,7 +307,10 @@ class BaseForm(RenderableFormMixin):
                         error_class="nonfield", renderer=self.renderer
                     )
                 else:
-                    self._errors[field] = self.error_class(renderer=self.renderer)
+                    self._errors[field] = self.error_class(
+                        renderer=self.renderer,
+                        field_id=self[field].auto_id,
+                    )
             self._errors[field].extend(error_list)
             if field in self.cleaned_data:
                 del self.cleaned_data[field]
@@ -315,7 +325,7 @@ class BaseForm(RenderableFormMixin):
         """
         Clean all of self.data and populate self._errors and self.cleaned_data.
         """
-        self._errors = ErrorDict()
+        self._errors = ErrorDict(renderer=self.renderer)
         if not self.is_bound:  # Stop further processing.
             return
         self.cleaned_data = {}
@@ -331,13 +341,8 @@ class BaseForm(RenderableFormMixin):
     def _clean_fields(self):
         for name, bf in self._bound_items():
             field = bf.field
-            value = bf.initial if field.disabled else bf.data
             try:
-                if isinstance(field, FileField):
-                    value = field.clean(value, bf.initial)
-                else:
-                    value = field.clean(value)
-                self.cleaned_data[name] = value
+                self.cleaned_data[name] = field._clean_bound_field(bf)
                 if hasattr(self, "clean_%s" % name):
                     value = getattr(self, "clean_%s" % name)()
                     self.cleaned_data[name] = value
@@ -426,6 +431,7 @@ class BaseForm(RenderableFormMixin):
 
 class Form(BaseForm, metaclass=DeclarativeFieldsMetaclass):
     "A collection of Fields, plus their associated data."
+
     # This is a separate class from BaseForm in order to abstract the way
     # self.fields is specified. This class (Form) is the one that does the
     # fancy metaclass stuff purely for the semantic sugar -- it allows one

@@ -24,6 +24,7 @@ from django.db.migrations.writer import MigrationWriter
 
 
 class Command(BaseCommand):
+    autodetector = MigrationAutodetector
     help = "Creates new migration(s) for apps."
 
     def add_arguments(self, parser):
@@ -209,7 +210,7 @@ class Command(BaseCommand):
                 log=self.log,
             )
         # Set up autodetector
-        autodetector = MigrationAutodetector(
+        autodetector = self.autodetector(
             loader.project_state(),
             ProjectState.from_apps(apps),
             questioner,
@@ -348,7 +349,7 @@ class Command(BaseCommand):
                     migration_string = self.get_relative_path(writer.path)
                     self.log("  %s\n" % self.style.MIGRATE_LABEL(migration_string))
                     for operation in migration.operations:
-                        self.log("    - %s" % operation.describe())
+                        self.log("    %s" % operation.formatted_description())
                     if self.scriptable:
                         self.stdout.write(migration_string)
                 if not self.dry_run:
@@ -391,7 +392,7 @@ class Command(BaseCommand):
                         )
                     )
                     self.log(writer.as_string())
-        run_formatters(self.written_files)
+        run_formatters(self.written_files, stderr=self.stderr)
 
     @staticmethod
     def get_relative_path(path):
@@ -456,12 +457,12 @@ class Command(BaseCommand):
                 for migration in merge_migrations:
                     self.log(self.style.MIGRATE_LABEL("  Branch %s" % migration.name))
                     for operation in migration.merged_operations:
-                        self.log("    - %s" % operation.describe())
+                        self.log("    %s" % operation.formatted_description())
             if questioner.ask_merge(app_label):
                 # If they still want to merge it, then write out an empty
                 # file depending on the migrations needing merging.
                 numbers = [
-                    MigrationAutodetector.parse_number(migration.name)
+                    self.autodetector.parse_number(migration.name)
                     for migration in merge_migrations
                 ]
                 try:
@@ -498,7 +499,7 @@ class Command(BaseCommand):
                     # Write the merge migrations file to the disk
                     with open(writer.path, "w", encoding="utf-8") as fh:
                         fh.write(writer.as_string())
-                    run_formatters([writer.path])
+                    run_formatters([writer.path], stderr=self.stderr)
                     if self.verbosity > 0:
                         self.log("\nCreated new merge migration %s" % writer.path)
                         if self.scriptable:

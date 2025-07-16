@@ -45,9 +45,7 @@ def delete_selected(modeladmin, request, queryset):
             raise PermissionDenied
         n = len(queryset)
         if n:
-            for obj in queryset:
-                obj_display = str(obj)
-                modeladmin.log_deletion(request, obj, obj_display)
+            modeladmin.log_deletions(request, queryset)
             modeladmin.delete_queryset(request, queryset)
             modeladmin.message_user(
                 request,
@@ -63,7 +61,7 @@ def delete_selected(modeladmin, request, queryset):
     if perms_needed or protected:
         title = _("Cannot delete %(name)s") % {"name": objects_name}
     else:
-        title = _("Are you sure?")
+        title = _("Delete multiple objects")
 
     context = {
         **modeladmin.admin_site.each_context(request),

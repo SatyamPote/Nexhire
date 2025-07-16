@@ -166,9 +166,6 @@ class DatabaseOperations(BaseDatabaseOperations):
         """
         return [(None, ("NULL", [], False))]
 
-    def adapt_decimalfield_value(self, value, max_digits=None, decimal_places=None):
-        return value
-
     def last_executed_query(self, cursor, sql, params):
         # With MySQLdb, cursor objects have an (undocumented) "_executed"
         # attribute where the exact query sent to the database is saved.
@@ -186,8 +183,7 @@ class DatabaseOperations(BaseDatabaseOperations):
         return "`%s`" % name
 
     def return_insert_columns(self, fields):
-        # MySQL and MariaDB < 10.5.0 don't support an INSERT...RETURNING
-        # statement.
+        # MySQL doesn't support an INSERT...RETURNING statement.
         if not fields:
             return "", ()
         columns = [
@@ -290,11 +286,6 @@ class DatabaseOperations(BaseDatabaseOperations):
 
     def pk_default_value(self):
         return "NULL"
-
-    def bulk_insert_sql(self, fields, placeholder_rows):
-        placeholder_rows_sql = (", ".join(row) for row in placeholder_rows)
-        values_sql = ", ".join("(%s)" % sql for sql in placeholder_rows_sql)
-        return "VALUES " + values_sql
 
     def combine_expression(self, connector, sub_expressions):
         if connector == "^":

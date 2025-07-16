@@ -60,8 +60,9 @@ def SET(value):
         def set_on_delete(collector, field, sub_objs, using):
             collector.add_field_update(field, value, sub_objs)
 
+        set_on_delete.lazy_sub_objs = True
+
     set_on_delete.deconstruct = lambda: ("django.db.models.SET", (value,), {})
-    set_on_delete.lazy_sub_objs = True
     return set_on_delete
 
 
@@ -74,9 +75,6 @@ SET_NULL.lazy_sub_objs = True
 
 def SET_DEFAULT(collector, field, sub_objs, using):
     collector.add_field_update(field, field.get_default(), sub_objs)
-
-
-SET_DEFAULT.lazy_sub_objs = True
 
 
 def DO_NOTHING(collector, field, sub_objs, using):
@@ -232,9 +230,8 @@ class Collector:
         """
         Return the objs in suitably sized batches for the used connection.
         """
-        field_names = [field.name for field in fields]
         conn_batch_size = max(
-            connections[self.using].ops.bulk_batch_size(field_names, objs), 1
+            connections[self.using].ops.bulk_batch_size(fields, objs), 1
         )
         if len(objs) > conn_batch_size:
             return [
@@ -307,13 +304,11 @@ class Collector:
         if not collect_related:
             return
 
-        if keep_parents:
-            parents = set(model._meta.get_parent_list())
         model_fast_deletes = defaultdict(list)
         protected_objects = defaultdict(list)
         for related in get_candidate_relations_to_delete(model._meta):
             # Preserve parent reverse relationships if keep_parents=True.
-            if keep_parents and related.model in parents:
+            if keep_parents and related.model in model._meta.all_parents:
                 continue
             field = related.field
             on_delete = field.remote_field.on_delete

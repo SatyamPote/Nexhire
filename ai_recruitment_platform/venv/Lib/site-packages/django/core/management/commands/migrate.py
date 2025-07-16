@@ -15,17 +15,12 @@ from django.utils.text import Truncator
 
 
 class Command(BaseCommand):
+    autodetector = MigrationAutodetector
     help = (
         "Updates database schema. Manages both apps with migrations and those without."
     )
-    requires_system_checks = []
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--skip-checks",
-            action="store_true",
-            help="Skip system checks.",
-        )
         parser.add_argument(
             "app_label",
             nargs="?",
@@ -47,6 +42,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--database",
             default=DEFAULT_DB_ALIAS,
+            choices=tuple(connections),
             help=(
                 'Nominates a database to synchronize. Defaults to the "default" '
                 "database."
@@ -93,12 +89,13 @@ class Command(BaseCommand):
             help="Delete nonexistent migrations from the django_migrations table.",
         )
 
+    def get_check_kwargs(self, options):
+        kwargs = super().get_check_kwargs(options)
+        return {**kwargs, "databases": [options["database"]]}
+
     @no_translations
     def handle(self, *args, **options):
         database = options["database"]
-        if not options["skip_checks"]:
-            self.check(databases=[database])
-
         self.verbosity = options["verbosity"]
         self.interactive = options["interactive"]
 
@@ -195,8 +192,11 @@ class Command(BaseCommand):
                 )
             if self.verbosity > 0:
                 self.stdout.write("Pruning migrations:", self.style.MIGRATE_HEADING)
-            to_prune = set(executor.loader.applied_migrations) - set(
-                executor.loader.disk_migrations
+            to_prune = sorted(
+                migration
+                for migration in set(executor.loader.applied_migrations)
+                - set(executor.loader.disk_migrations)
+                if migration[0] == app_label
             )
             squashed_migrations_with_deleted_replaced_migrations = [
                 migration_key
@@ -222,9 +222,6 @@ class Command(BaseCommand):
                     )
                 )
             else:
-                to_prune = sorted(
-                    migration for migration in to_prune if migration[0] == app_label
-                )
                 if to_prune:
                     for migration in to_prune:
                         app, name = migration
@@ -328,7 +325,7 @@ class Command(BaseCommand):
                 self.stdout.write("  No migrations to apply.")
                 # If there's changes that aren't in migrations yet, tell them
                 # how to fix it.
-                autodetector = MigrationAutodetector(
+                autodetector = self.autodetector(
                     executor.loader.project_state(),
                     ProjectState.from_apps(apps),
                 )

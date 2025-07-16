@@ -19,6 +19,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--database",
             default=DEFAULT_DB_ALIAS,
+            choices=tuple(connections),
             help=(
                 'Nominates a database to create SQL for. Defaults to the "default" '
                 "database."
@@ -31,10 +32,9 @@ class Command(BaseCommand):
         )
 
     def execute(self, *args, **options):
-        # sqlmigrate doesn't support coloring its output but we need to force
-        # no_color=True so that the BEGIN/COMMIT statements added by
-        # output_transaction don't get colored either.
-        options["no_color"] = True
+        # sqlmigrate doesn't support coloring its output, so make the
+        # BEGIN/COMMIT statements added by output_transaction colorless also.
+        self.style.SQL_KEYWORD = lambda noop: noop
         return super().execute(*args, **options)
 
     def handle(self, *args, **options):

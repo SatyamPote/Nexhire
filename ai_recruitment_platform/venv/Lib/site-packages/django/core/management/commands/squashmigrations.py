@@ -123,7 +123,7 @@ class Command(BaseCommand):
             if self.interactive:
                 answer = None
                 while not answer or answer not in "yn":
-                    answer = input("Do you wish to proceed? [yN] ")
+                    answer = input("Do you wish to proceed? [y/N] ")
                     if not answer:
                         answer = "n"
                         break
@@ -221,7 +221,7 @@ class Command(BaseCommand):
             )
         with open(writer.path, "w", encoding="utf-8") as fh:
             fh.write(writer.as_string())
-        run_formatters([writer.path])
+        run_formatters([writer.path], stderr=self.stderr)
 
         if self.verbosity > 0:
             self.stdout.write(
